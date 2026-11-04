@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>Lshot</AssemblyName>
+    <RootNamespace>Lshot</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>logo.ico</ApplicationIcon>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <PublishTrimmed>false</PublishTrimmed>
+    <DebugType>none</DebugType>
+    <NoWarn>$(NoWarn);WFAC010</NoWarn>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <Version>1.0.0</Version>
+    <Product>Lshot</Product>
+    <Company>Lshot</Company>
+    <Copyright>Copyright (c) 2026 Lshot</Copyright>
+    <Description>Lshot - offline annotated screenshots with image hover previews.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="logo.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="logo.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <Target Name="CopyBrandAssetsToPublish" AfterTargets="Publish">
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\logo.png;$(MSBuildProjectDirectory)\logo.ico" DestinationFolder="$(PublishDir)" />
+  </Target>
+
+  <Target Name="GenerateLogoIcon"
+          BeforeTargets="PrepareForBuild"
+          Condition="'$(OS)' == 'Windows_NT' and !Exists('$(MSBuildProjectDirectory)\logo.ico') and Exists('$(MSBuildProjectDirectory)\logo.png')">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\tools\Convert-LogoToIcon.ps1&quot; -Source &quot;$(MSBuildProjectDirectory)\logo.png&quot; -Destination &quot;$(MSBuildProjectDirectory)\logo.ico&quot;" />
+  </Target>
+
+  <Target Name="ConvertLogoIcon" Condition="Exists('$(MSBuildProjectDirectory)\logo.png')">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\tools\Convert-LogoToIcon.ps1&quot; -Source &quot;$(MSBuildProjectDirectory)\logo.png&quot; -Destination &quot;$(MSBuildProjectDirectory)\logo.ico&quot;" />
+  </Target>
+
+</Project>

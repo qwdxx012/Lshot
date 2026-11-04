@@ -1,0 +1,42 @@
+# Build output
+bin/
+obj/
+publish/
+dist/
+artifacts/
+
+# Visual Studio and Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+
+# Local settings and secrets
+settings.json
+settings.json.tmp
+.env
+appsettings.Local.json
+
+# Logs and temporary files
+*.log
+*.tmp
+*.cache
+*.pdb
+
+# Test scaffolding and screenshots
+test-artifacts/
+node_modules/
+
+# NuGet
+*.nupkg
+*.snupkg
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# macOS
+.DS_Store

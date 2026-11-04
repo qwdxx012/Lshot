@@ -1,0 +1,122 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag to publish, for example v1.0.0"
+        required: true
+        default: "v1.0.0"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Resolve release version
+        id: version
+        shell: pwsh
+        env:
+          RAW_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+        run: |
+          $tag = $env:RAW_VERSION.Trim()
+          if (-not $tag.StartsWith("v")) {
+            $tag = "v$tag"
+          }
+          $version = $tag.Substring(1)
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Release version must look like v1.0.0, received: $tag"
+          }
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Generate application icon if missing
+        shell: powershell
+        run: |
+          if (-not (Test-Path -LiteralPath "logo.ico")) {
+            powershell -NoProfile -ExecutionPolicy Bypass -File tools\Convert-LogoToIcon.ps1 -Source logo.png -Destination logo.ico
+            if ($LASTEXITCODE -ne 0) {
+              throw "Icon generation failed with exit code $LASTEXITCODE"
+            }
+          }
+
+      - name: Restore dependencies
+        shell: pwsh
+        run: dotnet restore Lshot.csproj
+
+      - name: Publish single-file executable
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          dotnet publish Lshot.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:Version=$env:VERSION `
+            -o publish
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item -LiteralPath "publish\Lshot.exe" -Destination "dist\Lshot-Portable.exe" -Force
+
+      - name: Build Inno Setup installer
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $candidates = @(
+            "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+            "C:\Program Files\Inno Setup 6\ISCC.exe"
+          )
+          $iscc = $candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+          if (-not $iscc) {
+            $iscc = (Get-Command iscc.exe -ErrorAction Stop).Source
+          }
+          & $iscc "/DMyAppVersion=$env:VERSION" "/DMyAppVersionInfo=$env:VERSION.0" "installer.iss"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup compilation failed with exit code $LASTEXITCODE"
+          }
+
+          $required = @("dist\Lshot-Setup.exe", "dist\Lshot-Portable.exe")
+          foreach ($file in $required) {
+            if (-not (Test-Path -LiteralPath $file)) {
+              throw "Expected release asset was not created: $file"
+            }
+          }
+          Get-ChildItem -LiteralPath "dist" | Select-Object Name, Length | Format-Table
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Lshot ${{ steps.version.outputs.version }}
+          body: |
+            Lshot ${{ steps.version.outputs.version }} release.
+
+            Downloads:
+            - Lshot-Setup.exe: per-user Windows installer without administrator prompts.
+            - Lshot-Portable.exe: standalone portable executable.
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
+          files: |
+            dist/Lshot-Setup.exe
+            dist/Lshot-Portable.exe
