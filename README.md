@@ -55,29 +55,28 @@ Lshot не использует сеть и не собирает статист
 
 ### Сборка из исходников
 
-Требования: .NET 8 SDK, Inno Setup 6.
+Требования: Rust (stable), Inno Setup 6 для установщика.
 
 ```powershell
-dotnet publish Lshot.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish
+cargo build --release
+New-Item -ItemType Directory -Force dist | Out-Null
+Copy-Item target\release\lshot.exe dist\Lshot-Portable.exe
 iscc installer.iss
 ```
 
 Результаты:
 
-- `publish\Lshot.exe`: автономный однофайловый исполняемый файл.
+- `target\release\lshot.exe`: исполняемый файл приложения.
+- `dist\Lshot-Portable.exe`: портативная версия.
 - `dist\Lshot-Setup.exe`: установщик.
 
-Если файл `logo.ico` отсутствует, создайте его из `logo.png`:
+Иконка и сведения о версии встраиваются в EXE при сборке из `logo.ico`. Если компилятор ресурсов (`windres`, `llvm-rc` или `rc.exe`) недоступен, сборка проходит без них — иконку можно добавить после сборки:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools\Convert-LogoToIcon.ps1 -Source logo.png -Destination logo.ico
+python tools\embed_icon.py target\release\lshot.exe logo.ico
 ```
 
-Или используйте цель MSBuild:
-
-```powershell
-dotnet msbuild Lshot.csproj -t:ConvertLogoIcon
-```
+`logo.ico` построен из `installer.png` (иконка установщика, файла и ярлыков), `logo.png` — иконка в трее. Оба PNG встроены в бинарь, поэтому портативная версия остаётся одним файлом.
 
 ### Автоматический выпуск
 
@@ -134,29 +133,28 @@ Lshot does not use the network and does not collect analytics. Settings are stor
 
 ### Build from source
 
-Requirements: .NET 8 SDK, Inno Setup 6.
+Requirements: Rust (stable), Inno Setup 6 for the installer.
 
 ```powershell
-dotnet publish Lshot.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish
+cargo build --release
+New-Item -ItemType Directory -Force dist | Out-Null
+Copy-Item target\release\lshot.exe dist\Lshot-Portable.exe
 iscc installer.iss
 ```
 
 Outputs:
 
-- `publish\Lshot.exe`: standalone single-file executable.
+- `target\release\lshot.exe`: the application executable.
+- `dist\Lshot-Portable.exe`: portable build.
 - `dist\Lshot-Setup.exe`: installer.
 
-If `logo.ico` is missing, generate it from `logo.png`:
+The icon and version information are embedded into the EXE at build time from `logo.ico`. Without a resource compiler (`windres`, `llvm-rc`, or `rc.exe`) the build succeeds without them; the icon can be added afterwards:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools\Convert-LogoToIcon.ps1 -Source logo.png -Destination logo.ico
+python tools\embed_icon.py target\release\lshot.exe logo.ico
 ```
 
-Or use the MSBuild target:
-
-```powershell
-dotnet msbuild Lshot.csproj -t:ConvertLogoIcon
-```
+`logo.ico` is generated from `installer.png` (installer, file and shortcut icon), `logo.png` is the tray icon. Both PNGs are compiled into the binary, so the portable build stays a single file.
 
 ### Automated release
 

@@ -5,6 +5,10 @@ publish/
 dist/
 artifacts/
 
+# Rust
+target/
+cache_last.png
+
 # Visual Studio and Rider
 .vs/
 .idea/

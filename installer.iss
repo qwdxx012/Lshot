@@ -6,7 +6,7 @@
   #define MyAppVersionInfo "1.0.0.0"
 #endif
 #define MyAppPublisher "Lshot"
-#define MyAppExeName "Lshot.exe"
+#define MyAppExeName "lshot.exe"
 
 [Setup]
 AppId={{6F3A1E2B-7C4D-4E58-9A10-3B5C7D9E2F41}
@@ -57,9 +57,9 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "startup"; Description: "{cm:RunAtStartup}"; GroupDescription: "{cm:AdditionalTasks}"; Flags: unchecked
 
 [Files]
-Source: "publish\Lshot.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "publish\logo.png"; DestDir: "{app}"; Flags: ignoreversion
-Source: "publish\logo.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "target\release\lshot.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "logo.png"; DestDir: "{app}"; Flags: ignoreversion
+Source: "logo.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\Lshot"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
@@ -76,7 +76,7 @@ procedure KillLshot;
 var
   ResultCode: Integer;
 begin
-  Exec(ExpandConstant('{sys}\taskkill.exe'), '/IM Lshot.exe /F /T', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/IM lshot.exe /F /T', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
